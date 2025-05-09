@@ -8,29 +8,43 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
-# Initialize MTCNN
 mtcnn = MTCNN(margin=20, keep_all=True, post_process=False, device='cuda:0')
 
-# Load video
-video_path = "./data/manipulated_sequences/Deepfakes/c23/videos/033_097"
-folder = f"./preprocessed_data/{video_path}"
-cap = cv2.VideoCapture(video_path+".mp4")
-frames = []
-
-while cap.isOpened():
-    success, frame = cap.read()
-    if not success:
-        break
-    frames.append(frame)  # Frame is a NumPy array (H, W, 3), BGR format
-
-cap.release()
+video_root = './data'
+output_root = './preprocessed_data'
+BATCH_SIZE = 64
 
 
-BATCH_SIZE = 256
-faces = [frame_faces for i in tqdm(range(0, len(frames), BATCH_SIZE)) for frame_faces in mtcnn(frames[i:min(len(frames),i+BATCH_SIZE)])]
+def process_video(path, save_path):
+    print(path, save_path)
+    cap = cv2.VideoCapture(path)
 
-os.makedirs(folder, exist_ok=True)
-for i, frame_faces in tqdm(enumerate(faces)):
-    face = frame_faces[0]
-    img_pil = Image.fromarray(face.permute(1, 2, 0).numpy().astype(np.uint8))
-    img_pil.save(os.path.join(folder, f"frame_{i}.png"))
+    frames = []
+    while cap.isOpened():
+        success, frame = cap.read()
+        if not success:
+            break
+        frames.append(frame)
+
+    cap.release()
+
+    faces = [frame_faces for i in tqdm(range(0, len(frames), BATCH_SIZE)) for frame_faces in mtcnn(frames[i:min(len(frames),i+BATCH_SIZE)])]
+
+    os.makedirs(save_path, exist_ok=True)
+    for i, frame_faces in tqdm(enumerate(faces)):
+        if frame_faces is None:
+            continue
+        face = frame_faces[0]
+        img_pil = Image.fromarray(face.permute(1, 2, 0).numpy().astype(np.uint8))
+        img_pil.save(os.path.join(save_path, f"frame_{i}.png"))
+
+
+for dirpath, _, filenames in os.walk(video_root):
+    for file in filenames:
+        if file.endswith('.mp4'):
+            video_path = os.path.join(dirpath, file)
+            relative_path = os.path.relpath(video_path, video_root)
+            output_folder = os.path.join(output_root, os.path.splitext(relative_path)[0])
+
+            process_video(video_path, output_folder)
+            
