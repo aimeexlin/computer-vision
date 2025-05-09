@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 img_path = "./preprocessed_data/manipulated_sequences/DeepFakeDetection/c23/videos/01_02__outside_talking_still_laughing__YVGY8LOK"
 img1_path = os.path.join(img_path, "frame_0.png")
-img2_path = os.path.join(img_path, "frame_1.png")
+img2_path = os.path.join(img_path, "frame_10.png")
 
 img1_original = np.array(Image.open(img1_path))[:, :, ::-1]
 img1 = torch.FloatTensor(np.ascontiguousarray(img1_original.transpose(2, 0, 1).astype(np.float32) * (1.0 / 255.0)))
@@ -95,8 +95,8 @@ def overlay_optical_flow(frame, flow, step=10, scale=1):
 
 
 # Apply the overlay function
-overlay_image = overlay_optical_flow(img1_original, res, step=10, scale=15)
+overlay_image = overlay_optical_flow(img1_original, res, step=6, scale=1)
 
-cv2.imshow('Optical Flow RGB', cv2.resize(overlay_image, (overlay_image.shape[0] * 3, overlay_image.shape[1]*3)))
+cv2.imshow('Optical Flow RGB', cv2.resize(overlay_image, (overlay_image.shape[0] * 4, overlay_image.shape[1]*4)))
 cv2.waitKey(0)
 cv2.destroyAllWindows()
